@@ -6,6 +6,8 @@ public class TiendaForm extends javax.swing.JFrame {
     private final TiendaService tienda;
 
     private javax.swing.JButton btnAgregar;
+    private javax.swing.JButton btnEliminarItem;
+    private javax.swing.JButton btnVaciarCarrito;
     private javax.swing.JButton btnPagar;
     private javax.swing.JButton btnReponer;
     private javax.swing.JButton btnSuscribir;
@@ -33,6 +35,8 @@ public class TiendaForm extends javax.swing.JFrame {
         lblProducto = new javax.swing.JLabel("Producto:");
         cbProductos = new javax.swing.JComboBox<>();
         btnAgregar = new javax.swing.JButton("Agregar al Carrito");
+        btnEliminarItem = new javax.swing.JButton("Eliminar Ítem");
+        btnVaciarCarrito = new javax.swing.JButton("Vaciar Carrito");
         btnSuscribir = new javax.swing.JButton("Avisar Stock (Observer)");
         btnReponer = new javax.swing.JButton("Reponer +5 Stock");
 
@@ -52,7 +56,7 @@ public class TiendaForm extends javax.swing.JFrame {
         });
 
         btnPagar = new javax.swing.JButton("Finalizar Compra y Facturar");
-        txtAreaSalida = new javax.swing.JTextArea(18, 60);
+        txtAreaSalida = new javax.swing.JTextArea(18, 65);
         scrollFactura = new javax.swing.JScrollPane(txtAreaSalida);
 
         setDefaultCloseOperation(javax.swing.WindowConstants.EXIT_ON_CLOSE);
@@ -74,6 +78,8 @@ public class TiendaForm extends javax.swing.JFrame {
         fila2.add(chkGarantia);
         fila2.add(chkRegalo);
         fila2.add(chkExpress);
+        fila2.add(btnEliminarItem);
+        fila2.add(btnVaciarCarrito);
 
         JPanel fila3 = new JPanel(new FlowLayout(FlowLayout.LEFT));
         fila3.add(lblDescuento);
@@ -93,6 +99,8 @@ public class TiendaForm extends javax.swing.JFrame {
         add(scrollFactura, BorderLayout.CENTER);
 
         btnAgregar.addActionListener(evt -> btnAgregarActionPerformed());
+        btnEliminarItem.addActionListener(evt -> btnEliminarItemActionPerformed());
+        btnVaciarCarrito.addActionListener(evt -> btnVaciarCarritoActionPerformed());
         btnSuscribir.addActionListener(evt -> btnSuscribirActionPerformed());
         btnReponer.addActionListener(evt -> btnReponerActionPerformed());
         btnPagar.addActionListener(evt -> btnPagarActionPerformed());
@@ -118,6 +126,48 @@ public class TiendaForm extends javax.swing.JFrame {
         } else {
             JOptionPane.showMessageDialog(this, "Sin stock disponible. Puedes suscribirte para recibir aviso.");
         }
+    }
+
+    private void btnEliminarItemActionPerformed() {
+        if (tienda.getCarrito().isEmpty()) {
+            JOptionPane.showMessageDialog(this, "El carrito ya está vacío.");
+            return;
+        }
+
+        String[] opciones = new String[tienda.getCarrito().size()];
+        for (int i = 0; i < tienda.getCarrito().size(); i++) {
+            Vendible v = tienda.getCarrito().get(i);
+            opciones[i] = (i + 1) + ". " + v.getDescripcion() + " ($" + v.getPrecio() + ")";
+        }
+
+        String elegido = (String) JOptionPane.showInputDialog(
+                this,
+                "Seleccione el producto que desea quitar del carrito:",
+                "Eliminar del Carrito",
+                JOptionPane.QUESTION_MESSAGE,
+                null,
+                opciones,
+                opciones[0]
+        );
+
+        if (elegido != null) {
+            int indice = Integer.parseInt(elegido.split("\\.")[0]) - 1;
+            if (tienda.eliminarDelCarrito(indice)) {
+                cargarProductosEnCombo();
+                actualizarVistaCarrito();
+            }
+        }
+    }
+
+    private void btnVaciarCarritoActionPerformed() {
+        if (tienda.getCarrito().isEmpty()) {
+            JOptionPane.showMessageDialog(this, "El carrito ya está vacío.");
+            return;
+        }
+        tienda.vaciarCarrito();
+        cargarProductosEnCombo();
+        actualizarVistaCarrito();
+        JOptionPane.showMessageDialog(this, "Se eliminaron todos los productos del carrito y se restauró el stock.");
     }
 
     private void btnSuscribirActionPerformed() {
@@ -173,9 +223,14 @@ public class TiendaForm extends javax.swing.JFrame {
     }
 
     private void actualizarVistaCarrito() {
+        if (tienda.getCarrito().isEmpty()) {
+            txtAreaSalida.setText("=== CARRITO DE COMPRAS VACÍO ===");
+            return;
+        }
         StringBuilder sb = new StringBuilder("=== CARRITO DE COMPRAS ===\n");
-        for (Vendible v : tienda.getCarrito()) {
-            sb.append(String.format("• %s -> $%.2f\n", v.getDescripcion(), v.getPrecio()));
+        for (int i = 0; i < tienda.getCarrito().size(); i++) {
+            Vendible v = tienda.getCarrito().get(i);
+            sb.append(String.format("%d. %s -> $%.2f\n", i + 1, v.getDescripcion(), v.getPrecio()));
         }
         sb.append(String.format("\nSubtotal actual: $%.2f", tienda.calcularSubtotal()));
         txtAreaSalida.setText(sb.toString());
