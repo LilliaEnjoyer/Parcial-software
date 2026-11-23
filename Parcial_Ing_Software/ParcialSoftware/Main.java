@@ -36,10 +36,11 @@ public class Main {
             System.out.println("1. Ver catálogo");
             System.out.println("2. Agregar producto al carrito (con extras)");
             System.out.println("3. Ver carrito");
-            System.out.println("4. Aplicar descuento");
-            System.out.println("5. Cerrar pedido y pagar");
-            System.out.println("6. Suscribirse a producto agotado (Observer)");
-            System.out.println("7. Reponer stock de producto (Admin)");
+            System.out.println("4. Eliminar producto del carrito / Vaciar carrito");
+            System.out.println("5. Aplicar descuento");
+            System.out.println("6. Cerrar pedido y pagar");
+            System.out.println("7. Suscribirse a producto agotado (Observer)");
+            System.out.println("8. Reponer stock de producto (Admin)");
             System.out.println("0. Salir");
             System.out.print("Seleccione una opción: ");
 
@@ -70,13 +71,34 @@ public class Main {
                 }
                 case "3" -> {
                     System.out.println("\n--- CARRITO ACTUAL ---");
-                    for (Vendible v : tienda.getCarrito()) {
-                        System.out.printf("- %s ($%.2f)\n", v.getDescripcion(), v.getPrecio());
+                    for (int i = 0; i < tienda.getCarrito().size(); i++) {
+                        Vendible v = tienda.getCarrito().get(i);
+                        System.out.printf("%d. %s ($%.2f)\n", i + 1, v.getDescripcion(), v.getPrecio());
                     }
                     System.out.printf("Subtotal: $%.2f | Total con descuentos: $%.2f\n",
                             tienda.calcularSubtotal(), tienda.calcularTotalConDescuentos());
                 }
                 case "4" -> {
+                    if (tienda.getCarrito().isEmpty()) {
+                        System.out.println("El carrito está vacío.");
+                        break;
+                    }
+                    for (int i = 0; i < tienda.getCarrito().size(); i++) {
+                        Vendible v = tienda.getCarrito().get(i);
+                        System.out.printf("%d. %s ($%.2f)\n", i + 1, v.getDescripcion(), v.getPrecio());
+                    }
+                    System.out.print("Ingrese el número del producto a eliminar (o 0 para vaciar todo): ");
+                    int num = Integer.parseInt(sc.nextLine());
+                    if (num == 0) {
+                        tienda.vaciarCarrito();
+                        System.out.println("Carrito vaciado.");
+                    } else if (tienda.eliminarDelCarrito(num - 1)) {
+                        System.out.println("Producto eliminado del carrito.");
+                    } else {
+                        System.out.println("Número inválido.");
+                    }
+                }
+                case "5" -> {
                     System.out.println("1. Temporada (15%) | 2. Cliente Frecuente (10%) | 3. Cupón ($20)");
                     String desc = sc.nextLine();
                     switch (desc) {
@@ -86,7 +108,7 @@ public class Main {
                     }
                     System.out.println("Descuento aplicado.");
                 }
-                case "5" -> {
+                case "6" -> {
                     System.out.println("Seleccione pago: 1. Tarjeta | 2. Transferencia | 3. Contra Entrega");
                     String mp = sc.nextLine();
                     EstrategiaPago pago = switch (mp) {
@@ -96,7 +118,7 @@ public class Main {
                     };
                     System.out.println("\n" + tienda.cerrarPedido(pago));
                 }
-                case "6" -> {
+                case "7" -> {
                     System.out.print("ID del producto agotado (ej. P02): ");
                     String idObs = sc.nextLine();
                     System.out.print("Su nombre: ");
@@ -106,7 +128,7 @@ public class Main {
                     tienda.suscribirAProducto(idObs, new ClienteObservador(nombre, correo));
                     System.out.println("Suscripción registrada.");
                 }
-                case "7" -> {
+                case "8" -> {
                     System.out.print("ID del producto a reponer: ");
                     String idRep = sc.nextLine();
                     System.out.print("Cantidad a ingresar: ");
