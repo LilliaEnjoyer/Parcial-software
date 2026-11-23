@@ -50,6 +50,37 @@ public class TiendaService {
         return true;
     }
 
+    // Extrae el Producto real debajo de los decoradores para devolverle el stock
+    private Producto obtenerProductoBase(Vendible item) {
+        Vendible actual = item;
+        while (actual instanceof ExtraDecorator decorador) {
+            actual = decorador.productoEnvuelto;
+        }
+        return (actual instanceof Producto prod) ? prod : null;
+    }
+
+    public boolean eliminarDelCarrito(int indice) {
+        if (indice < 0 || indice >= carrito.size()) {
+            return false;
+        }
+        Vendible removido = carrito.remove(indice);
+        Producto base = obtenerProductoBase(removido);
+        if (base != null) {
+            base.reponerStock(1);
+        }
+        return true;
+    }
+
+    public void vaciarCarrito() {
+        for (Vendible item : carrito) {
+            Producto base = obtenerProductoBase(item);
+            if (base != null) {
+                base.reponerStock(1);
+            }
+        }
+        carrito.clear();
+    }
+
     public List<Vendible> getCarrito() {
         return carrito;
     }
