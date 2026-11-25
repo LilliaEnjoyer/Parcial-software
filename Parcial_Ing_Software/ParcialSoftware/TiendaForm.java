@@ -6,14 +6,17 @@ public class TiendaForm extends javax.swing.JFrame {
     private final TiendaService tienda;
 
     private javax.swing.JButton btnAgregar;
+    private javax.swing.JButton btnModificarCant;
     private javax.swing.JButton btnEliminarItem;
     private javax.swing.JButton btnVaciarCarrito;
     private javax.swing.JButton btnPagar;
+    private javax.swing.JButton btnHistorial;
     private javax.swing.JButton btnReponer;
     private javax.swing.JButton btnSuscribir;
     private javax.swing.JComboBox<String> cbDescuento;
     private javax.swing.JComboBox<String> cbPago;
     private javax.swing.JComboBox<String> cbProductos;
+    private javax.swing.JSpinner spCantidad;
     private javax.swing.JCheckBox chkExpress;
     private javax.swing.JCheckBox chkGarantia;
     private javax.swing.JCheckBox chkRegalo;
@@ -21,6 +24,7 @@ public class TiendaForm extends javax.swing.JFrame {
     private javax.swing.JLabel lblExtras;
     private javax.swing.JLabel lblPago;
     private javax.swing.JLabel lblProducto;
+    private javax.swing.JLabel lblCant;
     private javax.swing.JScrollPane scrollFactura;
     private javax.swing.JTextArea txtAreaSalida;
 
@@ -34,29 +38,33 @@ public class TiendaForm extends javax.swing.JFrame {
     private void initComponents() {
         lblProducto = new javax.swing.JLabel("Producto:");
         cbProductos = new javax.swing.JComboBox<>();
-        btnAgregar = new javax.swing.JButton("Agregar al Carrito");
-        btnEliminarItem = new javax.swing.JButton("Eliminar Ítem");
-        btnVaciarCarrito = new javax.swing.JButton("Vaciar Carrito");
-        btnSuscribir = new javax.swing.JButton("Avisar Stock (Observer)");
-        btnReponer = new javax.swing.JButton("Reponer +5 Stock");
+        lblCant = new javax.swing.JLabel("Cant:");
+        spCantidad = new javax.swing.JSpinner(new SpinnerNumberModel(1, 1, 50, 1));
+        btnAgregar = new javax.swing.JButton("Agregar");
+        btnSuscribir = new javax.swing.JButton("Avisar Stock");
+        btnReponer = new javax.swing.JButton("Reponer +5");
 
         lblExtras = new javax.swing.JLabel("Extras:");
-        chkGarantia = new javax.swing.JCheckBox("Garantía Extendida (+$45)");
-        chkRegalo = new javax.swing.JCheckBox("Empaque Regalo (+$8.50)");
-        chkExpress = new javax.swing.JCheckBox("Envío Express (+$15)");
+        chkGarantia = new javax.swing.JCheckBox("Garantía (+$45)");
+        chkRegalo = new javax.swing.JCheckBox("Regalo (+$8.50)");
+        chkExpress = new javax.swing.JCheckBox("Express (+$15)");
+        btnModificarCant = new javax.swing.JButton("Modificar Cantidad");
+        btnEliminarItem = new javax.swing.JButton("Eliminar Ítem");
+        btnVaciarCarrito = new javax.swing.JButton("Vaciar Carrito");
 
         lblDescuento = new javax.swing.JLabel("Descuento:");
         cbDescuento = new javax.swing.JComboBox<>(new String[]{
-            "Sin descuento", "Temporada (-15%)", "Cliente Frecuente (-10%)", "Cupón (-$20)"
+            "Sin descuento", "Temporada (-15%)", "Cliente Frecuente (-10%)", "Cupón (-$20)", "Por Cantidad (-12% >=3 uds)"
         });
 
-        lblPago = new javax.swing.JLabel("Medio de Pago:");
+        lblPago = new javax.swing.JLabel("Pago:");
         cbPago = new javax.swing.JComboBox<>(new String[]{
             "Tarjeta de Crédito", "Transferencia Bancaria", "Contra Entrega"
         });
 
-        btnPagar = new javax.swing.JButton("Finalizar Compra y Facturar");
-        txtAreaSalida = new javax.swing.JTextArea(18, 65);
+        btnPagar = new javax.swing.JButton("Finalizar Compra");
+        btnHistorial = new javax.swing.JButton("Ver Historial");
+        txtAreaSalida = new javax.swing.JTextArea(18, 72);
         scrollFactura = new javax.swing.JScrollPane(txtAreaSalida);
 
         setDefaultCloseOperation(javax.swing.WindowConstants.EXIT_ON_CLOSE);
@@ -69,6 +77,8 @@ public class TiendaForm extends javax.swing.JFrame {
         JPanel fila1 = new JPanel(new FlowLayout(FlowLayout.LEFT));
         fila1.add(lblProducto);
         fila1.add(cbProductos);
+        fila1.add(lblCant);
+        fila1.add(spCantidad);
         fila1.add(btnAgregar);
         fila1.add(btnSuscribir);
         fila1.add(btnReponer);
@@ -78,6 +88,7 @@ public class TiendaForm extends javax.swing.JFrame {
         fila2.add(chkGarantia);
         fila2.add(chkRegalo);
         fila2.add(chkExpress);
+        fila2.add(btnModificarCant);
         fila2.add(btnEliminarItem);
         fila2.add(btnVaciarCarrito);
 
@@ -87,6 +98,7 @@ public class TiendaForm extends javax.swing.JFrame {
         fila3.add(lblPago);
         fila3.add(cbPago);
         fila3.add(btnPagar);
+        fila3.add(btnHistorial);
 
         panelControles.add(fila1);
         panelControles.add(fila2);
@@ -99,11 +111,13 @@ public class TiendaForm extends javax.swing.JFrame {
         add(scrollFactura, BorderLayout.CENTER);
 
         btnAgregar.addActionListener(evt -> btnAgregarActionPerformed());
+        btnModificarCant.addActionListener(evt -> btnModificarCantActionPerformed());
         btnEliminarItem.addActionListener(evt -> btnEliminarItemActionPerformed());
         btnVaciarCarrito.addActionListener(evt -> btnVaciarCarritoActionPerformed());
         btnSuscribir.addActionListener(evt -> btnSuscribirActionPerformed());
         btnReponer.addActionListener(evt -> btnReponerActionPerformed());
         btnPagar.addActionListener(evt -> btnPagarActionPerformed());
+        btnHistorial.addActionListener(evt -> txtAreaSalida.setText(tienda.consultarHistorialPedidos()));
 
         pack();
     }
@@ -112,9 +126,11 @@ public class TiendaForm extends javax.swing.JFrame {
         String seleccionado = (String) cbProductos.getSelectedItem();
         if (seleccionado == null) return;
         String id = seleccionado.split(" - ")[0];
+        int cantidad = (Integer) spCantidad.getValue();
 
         boolean agregado = tienda.agregarAlCarrito(
                 id,
+                cantidad,
                 chkGarantia.isSelected(),
                 chkRegalo.isSelected(),
                 chkExpress.isSelected()
@@ -124,7 +140,48 @@ public class TiendaForm extends javax.swing.JFrame {
             cargarProductosEnCombo();
             actualizarVistaCarrito();
         } else {
-            JOptionPane.showMessageDialog(this, "Sin stock disponible. Puedes suscribirte para recibir aviso.");
+            JOptionPane.showMessageDialog(this, "Stock insuficiente para la cantidad solicitada.");
+        }
+    }
+
+    private void btnModificarCantActionPerformed() {
+        if (tienda.getCarrito().isEmpty()) {
+            JOptionPane.showMessageDialog(this, "El carrito está vacío.");
+            return;
+        }
+
+        String[] opciones = new String[tienda.getCarrito().size()];
+        for (int i = 0; i < tienda.getCarrito().size(); i++) {
+            ItemCarrito ic = tienda.getCarrito().get(i);
+            opciones[i] = (i + 1) + ". " + ic.getDescripcionCompleta();
+        }
+
+        String elegido = (String) JOptionPane.showInputDialog(
+                this,
+                "Seleccione el producto cuya cantidad desea cambiar:",
+                "Modificar Cantidad",
+                JOptionPane.QUESTION_MESSAGE,
+                null,
+                opciones,
+                opciones[0]
+        );
+
+        if (elegido != null) {
+            int indice = Integer.parseInt(elegido.split("\\.")[0]) - 1;
+            String inputCant = JOptionPane.showInputDialog(this, "Ingrese la nueva cantidad (0 para eliminar):");
+            if (inputCant != null && !inputCant.isBlank()) {
+                try {
+                    int nuevaCant = Integer.parseInt(inputCant);
+                    if (tienda.modificarCantidadCarrito(indice, nuevaCant)) {
+                        cargarProductosEnCombo();
+                        actualizarVistaCarrito();
+                    } else {
+                        JOptionPane.showMessageDialog(this, "No hay suficiente stock para aumentar a esa cantidad.");
+                    }
+                } catch (NumberFormatException ex) {
+                    JOptionPane.showMessageDialog(this, "Cantidad inválida.");
+                }
+            }
         }
     }
 
@@ -136,13 +193,13 @@ public class TiendaForm extends javax.swing.JFrame {
 
         String[] opciones = new String[tienda.getCarrito().size()];
         for (int i = 0; i < tienda.getCarrito().size(); i++) {
-            Vendible v = tienda.getCarrito().get(i);
-            opciones[i] = (i + 1) + ". " + v.getDescripcion() + " ($" + v.getPrecio() + ")";
+            ItemCarrito ic = tienda.getCarrito().get(i);
+            opciones[i] = (i + 1) + ". " + ic.getDescripcionCompleta() + " ($" + ic.getSubtotalItem() + ")";
         }
 
         String elegido = (String) JOptionPane.showInputDialog(
                 this,
-                "Seleccione el producto que desea quitar del carrito:",
+                "Seleccione el producto que desea quitar:",
                 "Eliminar del Carrito",
                 JOptionPane.QUESTION_MESSAGE,
                 null,
@@ -167,7 +224,7 @@ public class TiendaForm extends javax.swing.JFrame {
         tienda.vaciarCarrito();
         cargarProductosEnCombo();
         actualizarVistaCarrito();
-        JOptionPane.showMessageDialog(this, "Se eliminaron todos los productos del carrito y se restauró el stock.");
+        JOptionPane.showMessageDialog(this, "Carrito vaciado y stock restaurado.");
     }
 
     private void btnSuscribirActionPerformed() {
@@ -203,6 +260,7 @@ public class TiendaForm extends javax.swing.JFrame {
             case 1 -> tienda.agregarDescuento(new DescuentoTemporada());
             case 2 -> tienda.agregarDescuento(new DescuentoClienteFrecuente());
             case 3 -> tienda.agregarDescuento(new DescuentoCupon(20.0));
+            case 4 -> tienda.agregarDescuento(new DescuentoCantidad(tienda.getTotalUnidadesCarrito()));
         }
 
         EstrategiaPago pago = switch (cbPago.getSelectedIndex()) {
@@ -229,10 +287,11 @@ public class TiendaForm extends javax.swing.JFrame {
         }
         StringBuilder sb = new StringBuilder("=== CARRITO DE COMPRAS ===\n");
         for (int i = 0; i < tienda.getCarrito().size(); i++) {
-            Vendible v = tienda.getCarrito().get(i);
-            sb.append(String.format("%d. %s -> $%.2f\n", i + 1, v.getDescripcion(), v.getPrecio()));
+            ItemCarrito ic = tienda.getCarrito().get(i);
+            sb.append(String.format("%d. %s -> $%.2f\n", i + 1, ic.getDescripcionCompleta(), ic.getSubtotalItem()));
         }
-        sb.append(String.format("\nSubtotal actual: $%.2f", tienda.calcularSubtotal()));
+        sb.append(String.format("\nTotal unidades: %d | Subtotal actual: $%.2f",
+                tienda.getTotalUnidadesCarrito(), tienda.calcularSubtotal()));
         txtAreaSalida.setText(sb.toString());
     }
 }
